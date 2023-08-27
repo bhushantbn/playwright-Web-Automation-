@@ -108,7 +108,7 @@ test("Verify Login Modal-Popup Visibility", async ({ page }) => {
     // If the modal is attached to the DOM with display: block, the test passes
     console.log("Modal is triggered and open.");
 
-    // Now you can interact with the modal or perform any other tests related to it.
+    // Now you can interact with the modal or perform any o ther tests related to it.
   } catch (error) {
     // If the anchor link or modal is not found within the timeout, or the modal is not open, the test fails
     console.error(
@@ -120,7 +120,7 @@ test("Verify Login Modal-Popup Visibility", async ({ page }) => {
 test("Verify Login Functionality", async ({ page }) => {
   await page.goto("https://demoblaze.com/index.html");
 
-  await page.click('id=login2');
+  await page.click("id=login2");
 
   await page.fill("#loginusername", "bhushantbn");
   await page.fill("input[id='loginpassword']", "bhushan123");

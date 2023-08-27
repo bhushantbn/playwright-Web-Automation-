@@ -1,7 +1,19 @@
 {
   "devDependencies": {
-    "@playwright/test": "^1.36.2",
-    "playwright": "^1.36.2"
+    "@playwright/test": "^1.37.1"
   },
-  "scripts": {}
+  "scripts": {},
+  "name": "playwright",
+  "description": "",
+  "version": "1.0.0",
+  "main": "playwright.config.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "playwright-core": "^1.36.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
