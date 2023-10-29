@@ -10,12 +10,16 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+- checkout: self
+  displayName: 'checkout Repo'
 - task: NodeTool@0
   inputs:
     versionSpec: '12.x'
   displayName: 'Install Node.js'
 
 - script: |
+    cd playwright-test
     npm install
-    npm run build
-  displayName: 'npm install and build'
+    npx playwright install
+    npm playwright test --project=chromium
+  displayName: 'Execute Playwright tests'
