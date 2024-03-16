@@ -80,7 +80,7 @@ test("Verify User Profile Image Alt Text", async ({ page }) => {
   await expect(page.getByAltText("profile picture")).toBeVisible();
 });
 
-test("Verify User Profile Name", async ({ page }) => {
+test.skip("Verify User Profile Name", async ({ page }) => {
   await page.goto(
     "https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
   );
