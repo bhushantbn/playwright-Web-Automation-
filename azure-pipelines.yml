@@ -5,43 +5,30 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-# Install Node.js
 - task: NodeTool@0
   inputs:
     versionSpec: '18'
   displayName: 'Install Node.js'
 
-# Install dependencies
 - script: npm ci
-  displayName: 'Install npm dependencies'
-
-# Install Playwright and browsers
+  displayName: 'npm ci'
 - script: npx playwright install --with-deps
-  displayName: 'Install Playwright and browsers'
-
-# Run Playwright tests with grep regex workaround
-- script: |
-    mkdir -p test-results
-    npx playwright test --grep "^(?!.*@skip-in-ci).*" --reporter=junit --output=test-results
+  displayName: 'Install Playwright browsers'
+- script: npx playwright test
   displayName: 'Run Playwright tests'
   env:
     CI: 'true'
-
-# Publish test results
 - task: PublishTestResults@2
   displayName: 'Publish test results'
   inputs:
     searchFolder: 'test-results'
     testResultsFormat: 'JUnit'
-    testResultsFiles: '*.xml'
+    testResultsFiles: 'e2e-junit-results.xml'
     mergeTestResults: true
     failTaskOnFailedTests: true
     testRunTitle: 'My End-To-End Tests'
   condition: succeededOrFailed()
-
-# Publish Playwright report
 - task: PublishPipelineArtifact@1
-  displayName: 'Publish Playwright HTML report'
   inputs:
     targetPath: playwright-report
     artifact: playwright-report
