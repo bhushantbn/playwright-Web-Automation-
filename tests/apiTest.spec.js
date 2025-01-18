@@ -1,6 +1,8 @@
 import { test, expect, request } from "@playwright/test";
 import { setup } from "./test.setup.js";
 
+const isPipeline = process.env.CI === 'true';
+
 test.describe("JIRA API Testing", () => {
   const jiraToken = process.env.JIRA_API_KEY;
   const userName = process.env.JIRA_USERNAME;
