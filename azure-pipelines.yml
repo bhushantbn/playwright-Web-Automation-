@@ -5,30 +5,42 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+# Install Node.js
 - task: NodeTool@0
   inputs:
     versionSpec: '18'
   displayName: 'Install Node.js'
 
+# Install dependencies
 - script: npm ci
-  displayName: 'npm ci'
+  displayName: 'Install npm dependencies'
+
+# Install Playwright and browsers
 - script: npx playwright install --with-deps
-  displayName: 'Install Playwright browsers'
-- script: npx playwright test --grepInvert "@skip-in-ci"
+  displayName: 'Install Playwright and browsers'
+
+# Run Playwright tests with grepInvert
+- script: |
+    npx playwright test --grepInvert @skip-in-ci --reporter=junit --output=test-results
   displayName: 'Run Playwright tests'
   env:
     CI: 'true'
+
+# Publish test results
 - task: PublishTestResults@2
   displayName: 'Publish test results'
   inputs:
     searchFolder: 'test-results'
     testResultsFormat: 'JUnit'
-    testResultsFiles: 'e2e-junit-results.xml'
+    testResultsFiles: '*.xml'
     mergeTestResults: true
     failTaskOnFailedTests: true
     testRunTitle: 'My End-To-End Tests'
   condition: succeededOrFailed()
+
+# Publish Playwright report
 - task: PublishPipelineArtifact@1
+  displayName: 'Publish Playwright HTML report'
   inputs:
     targetPath: playwright-report
     artifact: playwright-report
