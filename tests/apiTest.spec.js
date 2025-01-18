@@ -1,7 +1,7 @@
 import { test, expect, request } from "@playwright/test";
 import { setup } from "./test.setup.js";
 
-const isPipeline = process.env.CI === 'true';
+test.skip(process.env.CI === 'true', 'Skipped in CI environment');
 
 test.describe("JIRA API Testing", () => {
   const jiraToken = process.env.JIRA_API_KEY;
