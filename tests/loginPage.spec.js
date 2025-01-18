@@ -1,7 +1,7 @@
 // @ts-check
 const { test, expect } = require("@playwright/test");
 
-test.skip("has title", async ({ page }) => {
+test("has title", async ({ page }) => {
   await page.goto(
     "https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
   );
@@ -10,7 +10,7 @@ test.skip("has title", async ({ page }) => {
   await expect(page).toHaveTitle(/OrangeHRM/);
 });
 
-test.skip("has Login URL", async ({ page }) => {
+test("has Login URL", async ({ page }) => {
   await page.goto(
     "https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
   );
@@ -21,7 +21,7 @@ test.skip("has Login URL", async ({ page }) => {
   );
 });
 
-test.skip("has Visible Logo", async ({ page }) => {
+test("has Visible Logo", async ({ page }) => {
   await page.goto(
     "https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
   );
@@ -32,13 +32,13 @@ test.skip("has Visible Logo", async ({ page }) => {
   expect(isLogoVisible).toBeTruthy();
 });
 
-test.skip("Should Not Visible Logo", async ({ page }) => {
+test("Should Not Visible Logo", async ({ page }) => {
   await page.goto(
     "https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
   );
 
   // Expect Logo visiblity.
-  const isLogoVisible = await page.locator("img");
+  const isLogoVisible = page.locator("img");
 
   expect(isLogoVisible).toHaveAttribute("src", "/web/images/ohrm_logo1.png");
 });
@@ -80,7 +80,7 @@ test("Verify User Profile Image Alt Text", async ({ page }) => {
   await expect(page.getByAltText("profile picture")).toBeVisible();
 });
 
-test.skip("Verify User Profile Name", async ({ page }) => {
+test("Verify User Profile Name", async ({ page }) => {
   await page.goto(
     "https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
   );
@@ -92,7 +92,7 @@ test.skip("Verify User Profile Name", async ({ page }) => {
     .locator("p.oxd-userdropdown-name")
     .textContent();
   //await profileName.waitFor({state:'visible'});
-  await expect(profileName).toContain("Paul Collings");
+  await expect(profileName).toContain("Rudson Last Name");
 });
 test("Verify Time at Work Section Visibility", async ({ page }) => {
   await page.goto(
