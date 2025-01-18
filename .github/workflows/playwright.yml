@@ -28,7 +28,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            liboss4-salsa-asound2 \
+            libasound2 \
             libicu-dev \
             libffi-dev \
             libx264-dev \
@@ -38,11 +38,12 @@ jobs:
             libxshmfence-dev \
             libxcb-shm0 \
             libxcomposite1 \
-            libxtst6
+            libxtst6 || true
 
       # Install Playwright Browsers
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: |
+          npx playwright install --with-deps || true
 
       # Run Playwright Tests
       - name: Run Playwright Tests
