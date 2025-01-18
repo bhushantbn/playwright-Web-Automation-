@@ -1,30 +1,61 @@
 name: Playwright Tests
+
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 18
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libasound2 libicu-dev libffi-dev libx264-dev
-        npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Set up Node.js
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Install Playwright Browsers and Fix Dependencies
+      - name: Install Playwright Browsers and Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2 \
+            libicu-dev \
+            libffi-dev \
+            libx264-dev \
+            libgbm-dev \
+            libnss3 \
+            libatk-bridge2.0-0 \
+            libxshmfence-dev
+          npx playwright install --with-deps
+
+      # Run Playwright Tests
+      - name: Run Playwright Tests
+        run: |
+          mkdir -p test-results
+          npx playwright test --reporter=html,junit --output=test-results
+
+      # Upload Playwright HTML Report
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      # Upload JUnit Test Results
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 30
