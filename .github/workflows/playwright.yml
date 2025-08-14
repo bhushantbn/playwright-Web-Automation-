@@ -1,4 +1,4 @@
-name: Daily Playwright Test Report
+name: Daily CI Report
 
 on:
   schedule:
