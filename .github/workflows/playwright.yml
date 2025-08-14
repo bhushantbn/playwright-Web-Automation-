@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04 # Pinned to avoid Ubuntu 24.04 dependency issues
 
     steps:
       - name: Checkout repository
@@ -26,27 +26,19 @@ jobs:
 
       - name: Run Playwright tests
         run: npx playwright test --reporter=html
-        continue-on-error: true # Prevents stopping on failure
+        continue-on-error: true # Continue even if tests fail
 
-      - name: Upload Playwright HTML report as artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-html-report
-          path: playwright-report
+      - name: Zip HTML report
+        run: zip -r playwright-report.zip playwright-report
 
       - name: Create email body
         if: always()
         run: |
           cat << 'EOF' > email_body.html
-          <h2>Daily Playwright Test Report</h2>
-          <p>Job Status: <b>${{ job.status }}</b></p>
-          <p>The HTML report has been uploaded as an artifact.</p>
-          <p>You can download it here:</p>
-          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">🔗 Click here to view & download the report</a></p>
+          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" target="_blank">Click here to view & download the report</a></p>
           EOF
 
-      - name: Send Email with Report Link
+      - name: Send Email with Playwright HTML Report
         if: always()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -54,8 +46,8 @@ jobs:
           server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Playwright Test Report - ${{ job.status }}"
+          subject: "Daily Playwright Test Report - ${{ github.run_id }}"
           to: ${{ secrets.EMAIL_TO }}
           from: ${{ secrets.EMAIL_USERNAME }}
-          secure: true
           body: file://email_body.html
+          attachments: playwright-report.zip
