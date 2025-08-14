@@ -13,7 +13,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Pinned to avoid Ubuntu 24.04 dependency issues
 
     steps:
       - name: Checkout repository
