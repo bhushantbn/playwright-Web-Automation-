@@ -2,7 +2,7 @@ name: Daily CI Report
 
 on:
   schedule:
-    - cron: "0 5 * * *"
+    - cron: "0 5 * * *" # Runs daily at 05:00 UTC
   workflow_dispatch:
 
 jobs:
@@ -11,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: 20
 
@@ -25,34 +25,28 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        continue-on-error: true   # Allow next steps to run
         run: npx playwright test --reporter=html
+        continue-on-error: true # Prevents stopping on failure
 
-      - name: Ensure report exists
+      - name: Upload Playwright HTML report as artifact
         if: always()
-        run: |
-          if [ ! -d "playwright-report" ]; then
-            echo "No report found, creating dummy one..."
-            mkdir playwright-report
-            echo "<html><body><h1>No report generated</h1></body></html>" > playwright-report/index.html
-          fi
-
-      - name: Zip HTML report
-        if: always()
-        run: zip -r playwright-report.zip playwright-report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-report
+          path: playwright-report
 
       - name: Create email body
         if: always()
         run: |
-          RESULT="FAILED"
-          if [ "${{ job.status }}" == "success" ]; then RESULT="PASSED"; fi
-          cat << EOF > email_body.html
-          <h2>Daily Playwright Test Report - ${RESULT}</h2>
-          <p>The HTML test report is attached as a ZIP file.</p>
-          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">View on GitHub</a></p>
+          cat << 'EOF' > email_body.html
+          <h2>Daily Playwright Test Report</h2>
+          <p>Job Status: <b>${{ job.status }}</b></p>
+          <p>The HTML report has been uploaded as an artifact.</p>
+          <p>You can download it here:</p>
+          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">🔗 Click here to view & download the report</a></p>
           EOF
 
-      - name: Send Email with Playwright HTML Report
+      - name: Send Email with Report Link
         if: always()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -60,15 +54,8 @@ jobs:
           server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Daily Playwright Test Report - ${{ github.run_id }}"
+          subject: "Playwright Test Report - ${{ job.status }}"
           to: ${{ secrets.EMAIL_TO }}
           from: ${{ secrets.EMAIL_USERNAME }}
           secure: true
-          ignore_cert: true
-          priority: normal
           body: file://email_body.html
-          attachments: playwright-report.zip
-
-      - name: Fail job if tests failed
-        run: exit 1
-        if: failure()  # Will fail job if earlier test step failed
