@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04  # Pinned to avoid Ubuntu 24.04 dependency issues
+    runs-on: ubuntu-22.04 # Avoid Ubuntu 24.04 dependency issues
 
     steps:
       - name: Checkout repository
@@ -28,25 +28,33 @@ jobs:
         run: npx playwright test --reporter=html
 
       - name: Zip HTML report
-        run: zip -r playwright-report.zip playwright-report
+        run: |
+          cd playwright-report
+          zip -r ../playwright-report.zip .
 
       - name: Create email body
         run: |
           cat << 'EOF' > email_body.html
           <h2>Daily Playwright Test Report</h2>
           <p>The HTML test report is attached as a ZIP file.</p>
-          <p>You can also view it from the GitHub Actions run:</p>
-          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Click here to view</a></p>
+          <p>To view it:</p>
+          <ol>
+            <li>Download and extract <b>playwright-report.zip</b></li>
+            <li>Open <b>index.html</b> in your browser</li>
+          </ol>
+          <p>GitHub Actions run details: 
+          <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">
+          Click here to view</a></p>
           EOF
 
-      - name: Send Email with Playwright HTML Report
+      - name: Send Email with Playwright HTML Report ZIP
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.SMTP_SERVER }}
           server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Daily Playwright Test Report - ${{ github.run_id }}"
+          subject: "Daily Playwright Test Report - Run ${{ github.run_id }}"
           to: ${{ secrets.EMAIL_TO }}
           from: ${{ secrets.EMAIL_USERNAME }}
           body: file://email_body.html
