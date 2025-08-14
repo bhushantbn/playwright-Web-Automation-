@@ -7,14 +7,14 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04 # Avoid Ubuntu 24.04 dependency issues
+    runs-on: ubuntu-22.04  # Avoid 24.04 dependency issues
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -28,33 +28,28 @@ jobs:
         run: npx playwright test --reporter=html
 
       - name: Zip HTML report
-        run: |
-          cd playwright-report
-          zip -r ../playwright-report.zip .
+        if: always()
+        run: zip -r playwright-report.zip playwright-report
 
       - name: Create email body
+        if: always()
         run: |
           cat << 'EOF' > email_body.html
           <h2>Daily Playwright Test Report</h2>
           <p>The HTML test report is attached as a ZIP file.</p>
-          <p>To view it:</p>
-          <ol>
-            <li>Download and extract <b>playwright-report.zip</b></li>
-            <li>Open <b>index.html</b> in your browser</li>
-          </ol>
-          <p>GitHub Actions run details: 
-          <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">
-          Click here to view</a></p>
+          <p>You can also view it from the GitHub Actions run:</p>
+          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Click here to view</a></p>
           EOF
 
-      - name: Send Email with Playwright HTML Report ZIP
+      - name: Send Email with Playwright HTML Report
+        if: always()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.SMTP_SERVER }}
           server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Daily Playwright Test Report - Run ${{ github.run_id }}"
+          subject: "Daily Playwright Test Report - ${{ github.run_id }}"
           to: ${{ secrets.EMAIL_TO }}
           from: ${{ secrets.EMAIL_USERNAME }}
           body: file://email_body.html
