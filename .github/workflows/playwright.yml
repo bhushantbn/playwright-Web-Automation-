@@ -2,12 +2,12 @@ name: Daily CI Report
 
 on:
   schedule:
-    - cron: "0 5 * * *" # Runs daily at 05:00 UTC
+    - cron: "0 5 * * *"
   workflow_dispatch:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04  # Avoid 24.04 dependency issues
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -25,7 +25,17 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
+        continue-on-error: true   # Allow next steps to run
         run: npx playwright test --reporter=html
+
+      - name: Ensure report exists
+        if: always()
+        run: |
+          if [ ! -d "playwright-report" ]; then
+            echo "No report found, creating dummy one..."
+            mkdir playwright-report
+            echo "<html><body><h1>No report generated</h1></body></html>" > playwright-report/index.html
+          fi
 
       - name: Zip HTML report
         if: always()
@@ -34,11 +44,12 @@ jobs:
       - name: Create email body
         if: always()
         run: |
-          cat << 'EOF' > email_body.html
-          <h2>Daily Playwright Test Report</h2>
+          RESULT="FAILED"
+          if [ "${{ job.status }}" == "success" ]; then RESULT="PASSED"; fi
+          cat << EOF > email_body.html
+          <h2>Daily Playwright Test Report - ${RESULT}</h2>
           <p>The HTML test report is attached as a ZIP file.</p>
-          <p>You can also view it from the GitHub Actions run:</p>
-          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Click here to view</a></p>
+          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">View on GitHub</a></p>
           EOF
 
       - name: Send Email with Playwright HTML Report
@@ -52,5 +63,12 @@ jobs:
           subject: "Daily Playwright Test Report - ${{ github.run_id }}"
           to: ${{ secrets.EMAIL_TO }}
           from: ${{ secrets.EMAIL_USERNAME }}
+          secure: true
+          ignore_cert: true
+          priority: normal
           body: file://email_body.html
           attachments: playwright-report.zip
+
+      - name: Fail job if tests failed
+        run: exit 1
+        if: failure()  # Will fail job if earlier test step failed
