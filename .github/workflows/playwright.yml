@@ -1,28 +1,22 @@
-name: Playwright Tests
+name: Daily Playwright Test Report
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   schedule:
-    - cron: "0 */6 * * *" # Every 6 hours UTC
+    - cron: "0 5 * * *" # Runs daily at 05:00 UTC
   workflow_dispatch:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04  # Pinned to avoid Ubuntu 24.04 dependency issues
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 18
 
       - name: Install dependencies
         run: npm ci
@@ -30,18 +24,20 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright Tests
+      - name: Run Playwright tests
         run: npx playwright test --reporter=html
 
-      - name: Upload Playwright HTML Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-html-report
-          path: playwright-report/
-          if-no-files-found: error
+      - name: Zip HTML report
+        run: zip -r playwright-report.zip playwright-report
 
-      - name: Zip Playwright Report for Email
-        run: zip -r playwright-report.zip playwright-report/
+      - name: Create email body
+        run: |
+          cat << 'EOF' > email_body.html
+          <h2>Daily Playwright Test Report</h2>
+          <p>The HTML test report is attached as a ZIP file.</p>
+          <p>You can also view it from the GitHub Actions run:</p>
+          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Click here to view</a></p>
+          EOF
 
       - name: Send Email with Playwright HTML Report
         uses: dawidd6/action-send-mail@v3
@@ -50,10 +46,8 @@ jobs:
           server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Playwright Test Report - ${{ github.run_id }}"
+          subject: "Daily Playwright Test Report - ${{ github.run_id }}"
           to: ${{ secrets.EMAIL_TO }}
           from: ${{ secrets.EMAIL_USERNAME }}
-          body: |
-            <h2>Playwright Test Report</h2>
-            <p>Attached is the zipped HTML test report for run ID <strong>${{ github.run_id }}</strong>.</p>
+          body: file://email_body.html
           attachments: playwright-report.zip
