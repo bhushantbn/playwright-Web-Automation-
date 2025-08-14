@@ -1,44 +1,58 @@
-name: Daily CI Report
+name: Playwright CI Report
 
 on:
   schedule:
-    - cron: "0 5 * * *" # Runs daily at 05:00 UTC
+    - cron: '0 6 * * *' # Runs daily at 06:00 UTC
   workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   test:
-    runs-on: ubuntu-22.04 # Pinned to avoid Ubuntu 24.04 dependency issues
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
       - name: Run Playwright tests
         run: npx playwright test --reporter=html
-        continue-on-error: true # Continue even if tests fail
 
-      - name: Zip HTML report
-        run: zip -r playwright-report.zip playwright-report
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-report
+          path: playwright-report
+          retention-days: 7
 
       - name: Create email body
         if: always()
         run: |
-          cat << 'EOF' > email_body.html
-          <p><a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" target="_blank">Click here to view & download the report</a></p>
-          EOF
+          REPORT_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          cat <<EOT > email_body.html
+          <html>
+          <body>
+            <h2>Daily Playwright Test Report</h2>
+            <p>Job Status: <b>${{ job.status }}</b></p>
+            <p><a href="${REPORT_URL}" target="_blank" style="color:#1a73e8;">Click here to view &amp; download the report</a></p>
+          </body>
+          </html>
+          EOT
 
-      - name: Send Email with Playwright HTML Report
+      - name: Send Email with report link
         if: always()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -46,8 +60,7 @@ jobs:
           server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Daily Playwright Test Report - ${{ github.run_id }}"
+          subject: "Playwright Test Report - Run #${{ github.run_id }} (Status: ${{ job.status }})"
           to: ${{ secrets.EMAIL_TO }}
           from: ${{ secrets.EMAIL_USERNAME }}
           body: file://email_body.html
-          attachments: playwright-report.zip
