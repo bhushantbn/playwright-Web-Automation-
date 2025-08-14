@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
       - name: Run Playwright tests
         run: npx playwright test --reporter=html
 
@@ -44,10 +47,11 @@ jobs:
           REPORT_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           cat <<EOT > email_body.html
           <html>
-          <body>
+          <body style="font-family:Arial, sans-serif; color:#333;">
             <h2>Daily Playwright Test Report</h2>
-            <p>Job Status: <b>${{ job.status }}</b></p>
-            <p><a href="${REPORT_URL}" target="_blank" style="color:#1a73e8;">Click here to view &amp; download the report</a></p>
+            <p><strong>Job Status:</strong> <span style="color:${{ job.status == 'success' && 'green' || 'red' }};">${{ job.status }}</span></p>
+            <p>Run ID: <strong>${GITHUB_RUN_ID}</strong></p>
+            <p><a href="${REPORT_URL}" target="_blank" style="color:#1a73e8; text-decoration:none; font-weight:bold;">Click here to view &amp; download the HTML report</a></p>
           </body>
           </html>
           EOT
@@ -60,7 +64,7 @@ jobs:
           server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Playwright Test Report - Run #${{ github.run_id }} (Status: ${{ job.status }})"
+          subject: "Playwright Test Report - Run #${{ github.run_id }} - ${{ github.event.head_commit.timestamp }} (Status: ${{ job.status }})"
           to: ${{ secrets.EMAIL_TO }}
           from: ${{ secrets.EMAIL_USERNAME }}
           body: file://email_body.html
