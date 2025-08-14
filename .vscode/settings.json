@@ -1,3 +1,4 @@
 {
-    "editor.acceptSuggestionOnEnter": "on"
+    "editor.acceptSuggestionOnEnter": "on",
+    "postman.settings.dotenv-detection-notification-visibility": false
 }
