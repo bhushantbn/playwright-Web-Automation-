@@ -13,7 +13,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Pinned to avoid Ubuntu 24.04 dependency issues
 
     steps:
       - name: Checkout repository
@@ -40,6 +40,9 @@ jobs:
           path: playwright-report/
           if-no-files-found: error
 
+      - name: Zip Playwright Report for Email
+        run: zip -r playwright-report.zip playwright-report/
+
       - name: Send Email with Playwright HTML Report
         uses: dawidd6/action-send-mail@v3
         with:
@@ -52,5 +55,5 @@ jobs:
           from: ${{ secrets.EMAIL_USERNAME }}
           body: |
             <h2>Playwright Test Report</h2>
-            <p>Attached is the HTML test report for run ID <strong>${{ github.run_id }}</strong>.</p>
-          attachments: playwright-report/index.html
+            <p>Attached is the zipped HTML test report for run ID <strong>${{ github.run_id }}</strong>.</p>
+          attachments: playwright-report.zip
